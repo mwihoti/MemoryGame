@@ -1,0 +1,23 @@
+component MemoryTile inherits Rectangle {
+    callback clicked;
+
+    in property <bool> open_curtain;
+    in property <bool> solved;
+    in property <image> icon;
+
+    height: 64px;
+    width: 64px;
+    background: solved ? #34CE57 : #3960D5;
+    animate background {duration: 800ms; }
+
+    Image {
+        source: icon;
+        width: parent.width;
+        height: parent.height;
+    }
+
+    Rectangle { 
+        background: #193076;
+        x: 0px;
+    }
+}
