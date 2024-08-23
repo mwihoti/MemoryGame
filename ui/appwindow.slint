@@ -52,7 +52,7 @@ export component MainWindow inherits Window {
     callback check_if_pair_solved(); // Added
     in property <bool> disable_tiles; // Added
 
-    in property <[TileData]> memory_tiles: [
+    in-out property <[TileData]> memory_tiles: [
         { image: @image-url("icons/at.png") },
         { image: @image-url("icons/balance-scale.png") },
         { image: @image-url("icons/bicycle.png") },
@@ -72,7 +72,13 @@ export component MainWindow inherits Window {
         // propagate the solved status from the model to the tile
         solved: tile.solved;
         clicked => {
-            tile.image_visible = !tile.image_visible;
+          //Old [Player can open more than one tiles]  tile.image_visible = !tile.image_visible;
+          // New [Prevent player from opening more tiles than allowed]
+
+          if (!root.disable_tiles) {
+            tile.image-visible = true;
+            root.check_if_pair_solved();
+          }
         }
     }
 }
