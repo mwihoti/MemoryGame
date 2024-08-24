@@ -3,6 +3,8 @@ struct TileData {
     image_visible: bool,
     solved: bool,
 }
+
+
 component MemoryTile inherits Rectangle {
     callback clicked;
 
@@ -13,7 +15,7 @@ component MemoryTile inherits Rectangle {
     height: 64px;
     width: 64px;
     background: solved ? #34CE57 : #3960D5;
-    animate background {duration: 800ms; }
+    animate background { duration: 800ms; }
 
     Image {
         source: icon;
@@ -22,21 +24,31 @@ component MemoryTile inherits Rectangle {
     }
 
     // Left curtain
-    Rectangle { 
+    Rectangle {
         background: #193076;
         x: 0px;
         width: open_curtain ? 0px : (parent.width / 2);
         height: parent.height;
-        animate width {duration: 250ms; easing: ease-in;}
+        animate width {
+            duration: 250ms;
+            easing: ease-in;
+        }
     }
-// Right curtain
+
+    // Right curtain
     Rectangle {
         background: #193706;
         x: open_curtain ? parent.width : (parent.width / 2);
         width: open_curtain ? 0px : (parent.width / 2);
         height: parent.height;
-        animate width {duration: 250ms; easing: ease-in;}
-        animate x {duration: 250ms; easing: ease-in;}
+        animate width {
+            duration: 250ms;
+            easing: ease-in;
+        }
+        animate x {
+            duration: 250ms;
+            easing: ease-in;
+        }
     }
 
     TouchArea {
@@ -45,12 +57,15 @@ component MemoryTile inherits Rectangle {
         }
     }
 }
-export component MainWindow inherits Window {
-    width: 326px;
-    height: 326px;
+import { Button} from "std-widgets.slint";
 
-    callback check_if_pair_solved(); // Added
-    in property <bool> disable_tiles; // Added
+export component MainWindow inherits Window {
+    
+
+    callback check_if_pair_solved();
+    // Added
+    in property <bool> disable_tiles;
+    // Added
 
     in-out property <[TileData]> memory_tiles: [
         { image: @image-url("icons/at.png") },
@@ -62,23 +77,107 @@ export component MainWindow inherits Window {
         { image: @image-url("icons/motorcycle.png") },
         { image: @image-url("icons/video.png") },
     ];
-    for tile[i] in memory_tiles : MemoryTile {
-        x: mod(i, 4) * 74px;
-        y: floor(i / 4) * 74px;
-        width: 64px;
-        height: 64px;
-        icon: tile.image;
-        open_curtain: tile.image_visible || tile.solved;
-        // propagate the solved status from the model to the tile
-        solved: tile.solved;
-        clicked => {
-          //Old [Player can open more than one tiles]  tile.image_visible = !tile.image_visible;
-          // New [Prevent player from opening more tiles than allowed]
+    in-out property <int> score: 0;
+    in-out property <int> attempts: 0;
+    in-out property <int> time_elapsed: 0;
 
-          if (!root.disable_tiles) {
-            tile.image-visible = true;
-            root.check_if_pair_solved();
-          }
+    callback pause_resume();
+
+   VerticalLayout {
+    
+    
+    spacing: 10px;
+    
+    Text {text: "Memory";
+        color: #0f0f0f;
+        font-size: 24px;
+        width: 200px;
+        border-color: black;
+        
+    }
+   
+    
+   
+ Rectangle {
+        width: 200px;
+        height: 250px;
+        x: 250px;      
+        background: #1a1818;
+        border-radius: 5px;
+
+       
+    
+    Text {
+        text: "Score: " + score;
+        color: #FFFFFF;
+        font-size: 16px;
+        y: 0px;
+        
+    }
+
+    Text {
+        text: "Attempts: " + attempts;
+        color: #FFFFFF;
+        font-size: 16px;
+        y: 24px;
+        
+       
+    }
+
+    Text {
+        text: "Time: " + time_elapsed + " seconds";
+        color: #FFFFFF;
+   
+        y:80px;
+        font-size: 16px;
+    }
+
+  
+    Button {
+            text: "Pause/Resume";
+            
+            
         }
+         // Pause/Resume Button as a Rectangle
+ TouchArea {
+    clicked => {
+        root.pause_resume();
     }
 }
+
+        // TouchArea for button interaction
+    }
+   
+
+        Rectangle {
+            min-width: 600px;
+            height: 350px;
+            x: 200px;
+            
+          
+         
+            for tile[i] in memory_tiles: MemoryTile {
+                x: mod(i, 4) * 74px;
+                y: floor(i / 4) * 74px;
+                width: 64px;
+                height: 64px;
+                icon: tile.image;
+                open_curtain: tile.image_visible || tile.solved;
+                // propagate the solved status from the model to the tile
+            solved: tile.solved;
+                clicked => {
+                    //Old [Player can open more than one tiles]  tile.image_visible = !tile.image_visible;
+              // New [Prevent player from opening more tiles than allowed]
+    
+              if (!root.disable_tiles) {
+                        tile.image-visible = true;
+                        root.check_if_pair_solved();
+                    }
+                }
+            }
+
+        }}
+    }
+
+       
+
