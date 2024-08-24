@@ -56,7 +56,7 @@ To build and run the Memory Game app, follow these steps:
 
 Make sure you have Rust and cargo installed on your system before building and running the game.
 
-If you encounter any issues or have any questions, please feel free to reach out to us at [email@example.com](mailto:email@example.com).
+
 
 
 
