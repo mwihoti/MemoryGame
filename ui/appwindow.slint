@@ -83,27 +83,42 @@ export component MainWindow inherits Window {
 
     callback pause_resume();
 
+    
    VerticalLayout {
-    
-    
+    alignment: center;
     spacing: 10px;
-    
-    Text {text: "Memory";
-        color: #0f0f0f;
-        font-size: 24px;
-        width: 200px;
-        border-color: black;
+    width: 400px;
+    height: 300px;
+       
+    Rectangle {
         
+        
+        
+        Text {
+            text: "Memory Game";
+            color: #1c4be7;
+            font-size: 24px;
+            width: 200px;
+            //x: 250px;              
+        }
     }
-   
+    
+HorizontalLayout{
+    alignment: center;
+    spacing: 10px;
     
    
  Rectangle {
+        
+
+
         width: 200px;
-        height: 250px;
-        x: 250px;      
+        height: 300px;
+        //x: 500px;      
         background: #1a1818;
         border-radius: 5px;
+        
+        
 
        
     
@@ -152,7 +167,7 @@ export component MainWindow inherits Window {
         Rectangle {
             min-width: 600px;
             height: 350px;
-            x: 200px;
+            //x: 200px;
             
           
          
@@ -177,7 +192,6 @@ export component MainWindow inherits Window {
             }
 
         }}
-    }
-
+    }}
        
 
