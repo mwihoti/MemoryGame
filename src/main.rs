@@ -145,13 +145,11 @@ pub fn main() {
     let main_window_weak_3 = main_window.as_weak();
     main_window.on_reset_game({
         let tile_flips_in_progress_clone = tile_flips_in_progress.clone();
-        let score = score.clone();
         let tiles_model_clone = tiles_model.clone();
         let main_window_weak_clone = main_window_weak_3.clone();
-        let check_if_pair_solved_clone = check_if_pair_solved.clone();
         move || {
-            // Reset scores and attempts
-            *score.borrow_mut() = 0;
+            // Reset  and attempts
+            
             *attempts.borrow_mut() = 0;
             
             // Reset flip process status
