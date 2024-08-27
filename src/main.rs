@@ -142,77 +142,69 @@ pub fn main() {
 
     let main_window_weak_3 = main_window.as_weak();
     main_window.on_reset_game({
+        let tile_flips_in_progress_clone = tile_flips_in_progress.clone();
+        let score = score.clone();
+        let tiles_model_clone = tiles_model.clone();
+        let main_window_weak_clone = main_window_weak_3.clone();
         let check_if_pair_solved_clone = check_if_pair_solved.clone();
         move || {
+            // Reset scores and attempts
             *score.borrow_mut() = 0;
             *attempts.borrow_mut() = 0;
             // Reset flip process status
-            check_if_pair_solved_clone.clone();
-            restart_game(&main_window_weak_3);
+            *tile_flips_in_progress_clone.borrow_mut() = false;
+            if let Some(main_window) = main_window_weak_clone.upgrade() {
+                reshuffle_tiles(&main_window, tiles_model_clone.clone());
+
+                // Ensure pair-checking logic is ready for new state
+                main_window.on_check_if_pair_solved(
+                   { let check_if_pair_solved_clone = check_if_pair_solved.clone();
+                    move || {
+                        (check_if_pair_solved_clone)();
+                }});
+            }
         }
     });
 
     main_window.run().unwrap();
 }
 
-fn show_congratulations_message(
-    main_window: &slint::Weak<MainWindow>,
-    score: i32,
-    check_if_pair_solved: Rc<Box<dyn Fn()>>,
-) {
-    if let Some(main_window) = main_window.upgrade() {
-        main_window.set_congratulations_message(
-            format!("Congratulations! You won with a score of {}.", score).into(),
-        );
-        reshuffle_tiles(&main_window);
-    }
-}
-fn restart_game(main_window: &slint::Weak<MainWindow>) {
-    if let Some(main_window) = main_window.upgrade() {
-        reshuffle_tiles(&main_window);
-       
-    }
-}
 
+//{fn restart_game(main_window: &slint::Weak<MainWindow>) {
+ //   if let Some(main_window) = main_window.upgrade() {
+        // Reset the game state, including tile visibility and solved state
+      //  reshuffle_tiles(&main_window);
 
-fn reshuffle_tiles(main_window: &MainWindow) {
+        // Reset flip progress status
+       // let tile_flips_in_progress = Rc::new(std::cell::RefCell::new(false));
+    //    *tile_flips_in_progress.borrow_mut() = false;
+ //   }
+//}}
+
+fn reshuffle_tiles(main_window: &MainWindow, tiles_model: Rc<slint::VecModel<TileData>>) {
     // Reset score, attempts, and other game state
-   // main_window.set_score(0);
-   // main_window.set_attempts(0);
-   // main_window.set_time_elapsed(0);
-   // main_window.set_disable_tiles(false);
+    main_window.set_score(0);
+    main_window.set_attempts(0);
+    main_window.set_time_elapsed(0);
+    main_window.set_disable_tiles(false);
     main_window.set_congratulations_message("".into());
 
     // Collect the current tiles and prepare for reshuffling
     let mut tiles: Vec<TileData> = main_window.get_memory_tiles().iter().collect();
     for tile in &mut tiles {
-        tile.image_visible = false;
-        tile.solved = false;
+        tile.image_visible = false;  // Reset visibility
+        tile.solved = false;         // Reset solved state
     }
+    let tile_flips_in_progress = Rc::new(std::cell::RefCell::new(false));
+    let tile_flips_in_progress_clone = tile_flips_in_progress.clone();
 
     // Shuffle the tiles
     tiles.shuffle(&mut rand::thread_rng());
-
-    // Set the reshuffled tiles back to the main window
-    let tiles_model = Rc::new(slint::VecModel::from(tiles));
-    let tiles_model_clone = tiles_model.clone();
-    main_window.set_memory_tiles(tiles_model.into());
-
-     // Ensure that no more than two tiles are flipped at the same time
-    let flipped_tiles: Vec<(usize, TileData)> = tiles_model_clone
-        .iter()
-        .enumerate()
-        .filter(|(_, tile)| tile.image_visible && !tile.solved)
-        .collect();
-
-    if flipped_tiles.len() > 2 {
-        // If more than two tiles are flipped, flip them back
-        for (idx, mut tile) in flipped_tiles {
-            tile.image_visible = false;
-            tiles_model_clone.set_row_data(idx, tile);
-        }
-    }
-
+    *tile_flips_in_progress_clone.borrow_mut() = true;
     
-}
+    // updatae the model with reshuffled tiles
+    tiles_model.set_vec(tiles);
+   
+    }
+    
 
