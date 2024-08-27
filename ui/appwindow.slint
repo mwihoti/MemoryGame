@@ -87,7 +87,7 @@ export component MainWindow inherits Window {
     in-out property <string> congratulations_message: "";
     in-out property <string> player_name: "";
     in-out property <bool> show_congratulations_message: false;
-    callback start_game();
+    //callback start_game();
     callback restart_game();
     callback pause_resume();
     callback reset_game();
@@ -119,17 +119,17 @@ export component MainWindow inherits Window {
                
                 
                 
-                Button {
-                    text: "Start Game";
-                    clicked => {
-                            root.start_game();
-                    }
-                }
+               // Button {
+                //    text: "Start Game";
+                //    clicked => {
+                          //  root.start_game();
+                   // }
+               // }
     
                 Button {
                     text: "Restart Game";
                     clicked => {
-                        root.restart_game();
+                        root.reset_game();
                     }
                 }
             }
@@ -170,12 +170,12 @@ export component MainWindow inherits Window {
                         font-size: 14px;
                     }
     
-                    Button {
-                        text: "Restart Time";
-                        clicked => {
-                            root.pause_resume();
-                        }
-                    }
+                    //Button {
+                      //  text: "Restart Time";
+                        //clicked => {
+                  //          root.pause_resume();
+                        //}
+                    //}
                 }
             }
             for t in [ "Memory  GAME. How fast are you?", "!" ] : Text {

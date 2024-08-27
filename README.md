@@ -6,7 +6,7 @@ MemoryGame
 Memory Game is built using Slint UI Rust.
 
 
-
+Video demo: https://gemoo.com/tools/upload-video/share/686938791240458240?codeId=vzqNmAeqaAO4O&card=686938786928721920&origin=videolinkgenerator
 
 ## How to Play
 
