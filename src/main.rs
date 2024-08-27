@@ -1,22 +1,37 @@
 use std::time::Instant;
 use std::convert::TryInto;
-use rand::prelude::SliceRandom; // Import the SliceRandom trait for shuffle method
+use rand::prelude::SliceRandom;
+use slint::Model;
+use std::rc::Rc;
 
 slint::include_modules!();
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen::prelude::wasm_bindgen(start))]
 pub fn main() {
-    use slint::Model;
-
     let main_window = MainWindow::new().unwrap();
+
+    // Initialize player name
+    let player_name = Rc::new(std::cell::RefCell::new(String::new()));
+    let player_name_clone = player_name.clone();
+
+    let main_window_weak = main_window.as_weak(); // Convert main_window to Weak reference
+
+    main_window.on_start_game(move || {
+        if let Some(main_window) = main_window_weak.upgrade() {
+            let player_name = main_window.get_player_name();
+            if player_name.is_empty() {
+                main_window.set_player_name("Player".into());
+            }
+            main_window.set_player_name(player_name_clone.borrow().clone().into());
+        }
+    });
 
     // Initialize timer and other components
     let start_time = Instant::now();
-    let timer_active = std::rc::Rc::new(std::cell::RefCell::new(true));
+    let timer_active = Rc::new(std::cell::RefCell::new(true));
     let timer_active_clone = timer_active.clone();
     let main_window_weak = main_window.as_weak();
 
-    // Create a Timer instance
     let game_timer = slint::Timer::default();
     game_timer.start(
         slint::TimerMode::Repeated,
@@ -37,75 +52,165 @@ pub fn main() {
         *active = !*active;
     });
 
-    // Initialize tiles for the game
     let mut tiles: Vec<TileData> = main_window.get_memory_tiles().iter().collect();
     tiles.extend(tiles.clone());
-    tiles.shuffle(&mut rand::thread_rng()); // Shuffle tiles randomly
+    tiles.shuffle(&mut rand::thread_rng());
 
-    // Assign the shuffled Vec to the model property
-    let tiles_model = std::rc::Rc::new(slint::VecModel::from(tiles));
+    let tiles_model = Rc::new(slint::VecModel::from(tiles));
     main_window.set_memory_tiles(tiles_model.clone().into());
 
-    // Initialize scores and attempts
-    let score = std::rc::Rc::new(std::cell::RefCell::new(0));
-    let attempts = std::rc::Rc::new(std::cell::RefCell::new(0));
+    let score = Rc::new(std::cell::RefCell::new(0));
+    let attempts = Rc::new(std::cell::RefCell::new(0));
+    let tile_flips_in_progress = Rc::new(std::cell::RefCell::new(false)); // Track flipping state
 
     let score_clone = score.clone();
     let attempts_clone = attempts.clone();
-
     let tiles_model_clone = tiles_model.clone();
-    let main_window_weak = main_window.as_weak();
+    let main_window_weak2 = main_window.as_weak();
+    let tile_flips_in_progress_clone = tile_flips_in_progress.clone();
 
-    main_window.on_check_if_pair_solved(move || {
-        let flipped_tiles: Vec<(usize, TileData)> = tiles_model_clone.iter().enumerate()
-            .filter(|(_, tile)| tile.image_visible && !tile.solved)
-            .collect();
-        
-        if flipped_tiles.len() == 2 {
-            let (t1_idx, t1) = flipped_tiles[0].clone();
-            let (t2_idx, t2) = flipped_tiles[1].clone();
-        
-            // Increment attempts
-            *attempts_clone.borrow_mut() += 1;
-            if let Some(main_window) = main_window_weak.upgrade() {
-                main_window.set_attempts(*attempts_clone.borrow());
+    let check_if_pair_solved: Rc<Box<dyn Fn()>> = Rc::new(Box::new({
+        let score_clone = score_clone.clone();
+        let attempts_clone = attempts_clone.clone();
+        let tiles_model_clone = tiles_model_clone.clone();
+        let main_window_weak2 = main_window_weak2.clone();
+        let tile_flips_in_progress_clone = tile_flips_in_progress_clone.clone();
+
+        move || {
+            if *tile_flips_in_progress_clone.borrow() {
+                return; // Prevent checking if a flip process is already in progress
             }
-        
-            // Check if pair is solved
-            if t1.image == t2.image {
-                // Increment score for correct match
-                *score_clone.borrow_mut() += 10;
-                if let Some(main_window) = main_window_weak.upgrade() {
-                    main_window.set_score(*score_clone.borrow());
-                }
-        
-                let mut t1 = tiles_model_clone.row_data(t1_idx).unwrap();  // Dereference t1_idx
-                let mut t2 = tiles_model_clone.row_data(t2_idx).unwrap();  // Dereference t2_idx
-                t1.solved = true;
-                t2.solved = true;
-                tiles_model_clone.set_row_data(t1_idx, t1);  // Dereference t1_idx
-                tiles_model_clone.set_row_data(t2_idx, t2);  // Dereference t2_idx
-            } else {
-                if let Some(main_window) = main_window_weak.upgrade() {
-                    main_window.set_disable_tiles(true);
+
+            let flipped_tiles: Vec<(usize, TileData)> = tiles_model_clone
+                .iter()
+                .enumerate()
+                .filter(|(_, tile)| tile.image_visible && !tile.solved)
+                .collect();
+
+            if flipped_tiles.len() == 2 {
+                *tile_flips_in_progress_clone.borrow_mut() = true; // Set flip process as in progress
+
+                let (t1_idx, t1) = flipped_tiles[0].clone();
+                let (t2_idx, t2) = flipped_tiles[1].clone();
+
+                *attempts_clone.borrow_mut() += 1;
+                if let Some(main_window) = main_window_weak2.upgrade() {
+                    main_window.set_attempts(*attempts_clone.borrow());
                 }
 
-                let tiles_model_clone_inner = tiles_model_clone.clone();
-                let main_window_weak_inner = main_window_weak.clone();
-                slint::Timer::single_shot(std::time::Duration::from_secs(1), move || {
-                    if let Some(main_window) = main_window_weak_inner.upgrade() {
-                        let mut t1 = tiles_model_clone_inner.row_data(t1_idx).unwrap();  // Dereference t1_idx
-                        let mut t2 = tiles_model_clone_inner.row_data(t2_idx).unwrap();  // Dereference t2_idx
-                        t1.image_visible = false;
-                        t2.image_visible = false;
-                        tiles_model_clone_inner.set_row_data(t1_idx, t1);  // Dereference t1_idx
-                        tiles_model_clone_inner.set_row_data(t2_idx, t2);  // Dereference t2_idx
-                        main_window.set_disable_tiles(false);
+                if t1.image == t2.image {
+                    *score_clone.borrow_mut() += 10;
+                    if *score_clone.borrow() == (tiles_model_clone.row_count() / 2) * 10 {
+                      //  show_congratulations_message(
+                         //   &main_window_weak2,
+                       //     (*score_clone.borrow()).try_into().unwrap(),
+                        
+                    //    );
                     }
-                });
+                    if let Some(main_window) = main_window_weak2.upgrade() {
+                        main_window.set_score((*score_clone.borrow()).try_into().unwrap());
+                    }
+
+                    let mut t1 = tiles_model_clone.row_data(t1_idx).unwrap();
+                    let mut t2 = tiles_model_clone.row_data(t2_idx).unwrap();
+                    t1.solved = true;
+                    t2.solved = true;
+                    tiles_model_clone.set_row_data(t1_idx, t1);
+                    tiles_model_clone.set_row_data(t2_idx, t2);
+
+                    *tile_flips_in_progress_clone.borrow_mut() = false; // Reset flip process status
+                } else {
+                    if let Some(main_window) = main_window_weak2.upgrade() {
+                        main_window.set_disable_tiles(true);
+                    }
+
+                    let tiles_model_clone_inner = tiles_model_clone.clone();
+                    let main_window_weak_inner = main_window_weak2.clone();
+                    let tile_flips_in_progress_clone_inner = tile_flips_in_progress_clone.clone();
+
+                    slint::Timer::single_shot(std::time::Duration::from_secs(1), move || {
+                        if let Some(main_window) = main_window_weak_inner.upgrade() {
+                            let mut t1 = tiles_model_clone_inner.row_data(t1_idx).unwrap();
+                            let mut t2 = tiles_model_clone_inner.row_data(t2_idx).unwrap();
+                            t1.image_visible = false;
+                            t2.image_visible = false;
+                            tiles_model_clone_inner.set_row_data(t1_idx, t1);
+                            tiles_model_clone_inner.set_row_data(t2_idx, t2);
+                            main_window.set_disable_tiles(false);
+                            *tile_flips_in_progress_clone_inner.borrow_mut() = false; // Reset flip process status
+                        }
+                    });
+                }
             }
+        }
+    }));
+
+    main_window.on_check_if_pair_solved({
+        let check_if_pair_solved_clone = check_if_pair_solved.clone();
+        move || {
+            (check_if_pair_solved_clone)();
+        }
+    });
+
+    let main_window_weak_3 = main_window.as_weak();
+    main_window.on_reset_game({
+        let check_if_pair_solved_clone = check_if_pair_solved.clone();
+        move || {
+            *score.borrow_mut() = 0;
+            *attempts.borrow_mut() = 0;
+            *tile_flips_in_progress.borrow_mut() = false; // Reset flip process status
+            restart_game(&main_window_weak_3, check_if_pair_solved_clone.clone());
         }
     });
 
     main_window.run().unwrap();
+}
+
+fn show_congratulations_message(
+    main_window: &slint::Weak<MainWindow>,
+    score: i32,
+    check_if_pair_solved: Rc<Box<dyn Fn()>>,
+) {
+    if let Some(main_window) = main_window.upgrade() {
+        main_window.set_congratulations_message(
+            format!("Congratulations! You won with a score of {}.", score).into(),
+        );
+        reshuffle_tiles(&main_window, check_if_pair_solved);
+    }
+}
+
+fn reshuffle_tiles(main_window: &MainWindow, check_if_pair_solved: Rc<Box<dyn Fn()>>) {
+    // Reset score, attempts, and other game state
+    main_window.set_score(0);
+    main_window.set_attempts(0);
+    main_window.set_time_elapsed(0);
+    main_window.set_disable_tiles(false);
+    main_window.set_congratulations_message("".into());
+
+    // Collect the current tiles and prepare for reshuffling
+    let mut tiles: Vec<TileData> = main_window.get_memory_tiles().iter().collect();
+    for tile in &mut tiles {
+        tile.image_visible = false;
+        tile.solved = false;
+    }
+
+    // Shuffle the tiles
+    tiles.shuffle(&mut rand::thread_rng());
+
+    // Set the reshuffled tiles back to the main window
+    let tiles_model = Rc::new(slint::VecModel::from(tiles));
+    main_window.set_memory_tiles(tiles_model.into());
+
+    main_window.on_check_if_pair_solved({
+        let check_if_pair_solved_clone = check_if_pair_solved.clone();
+        move || {
+            (check_if_pair_solved_clone)();
+        }
+    });
+}
+
+fn restart_game(main_window: &slint::Weak<MainWindow>, check_if_pair_solved: Rc<Box<dyn Fn()>>) {
+    if let Some(main_window) = main_window.upgrade() {
+        reshuffle_tiles(&main_window, check_if_pair_solved.clone());
+    }
 }

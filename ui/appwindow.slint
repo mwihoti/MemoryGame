@@ -12,8 +12,10 @@ component MemoryTile inherits Rectangle {
     in property <bool> solved;
     in property <image> icon;
 
-    height: 64px;
-    width: 64px;
+    height: 80%;
+    width: 80%;
+    x: 40px;
+    
     background: solved ? #34CE57 : #3960D5;
     animate background { duration: 800ms; }
 
@@ -55,11 +57,13 @@ component MemoryTile inherits Rectangle {
         clicked => {
             root.clicked();
         }
-    }
-}
-import { Button} from "std-widgets.slint";
+    }}
+
+import { Button, VerticalBox, HorizontalBox } from "std-widgets.slint";
 
 export component MainWindow inherits Window {
+    in-out property <string> error_message: "";
+    
     
 
     callback check_if_pair_solved();
@@ -80,118 +84,157 @@ export component MainWindow inherits Window {
     in-out property <int> score: 0;
     in-out property <int> attempts: 0;
     in-out property <int> time_elapsed: 0;
-
+    in-out property <string> congratulations_message: "";
+    in-out property <string> player_name: "";
+    in-out property <bool> show_congratulations_message: false;
+    callback start_game();
+    callback restart_game();
     callback pause_resume();
-
+    callback reset_game();
     
-   VerticalLayout {
-    alignment: center;
-    spacing: 10px;
-    width: 400px;
-    height: 300px;
-       
-    Rectangle {
-        
-        
-        
-        Text {
-            text: "Memory Game";
-            color: #1c4be7;
-            font-size: 24px;
-            width: 200px;
-            //x: 250px;              
-        }
-    }
+    VerticalLayout {
+        spacing: 10px;
+        width: 90%;  // Adjusted to fit within screen
+        height: 50%; // Adjusted to fit within screen
     
-HorizontalLayout{
-    alignment: center;
-    spacing: 10px;
-    
-   
- Rectangle {
-        
-
-
-        width: 200px;
-        height: 300px;
-        //x: 500px;      
-        background: #1a1818;
-        border-radius: 5px;
-        
-        
-
-       
-    
-    Text {
-        text: "Score: " + score;
-        color: #FFFFFF;
-        font-size: 16px;
-        y: 0px;
-        
-    }
-
-    Text {
-        text: "Attempts: " + attempts;
-        color: #FFFFFF;
-        font-size: 16px;
-        y: 24px;
-        
-       
-    }
-
-    Text {
-        text: "Time: " + time_elapsed + " seconds";
-        color: #FFFFFF;
-   
-        y:80px;
-        font-size: 16px;
-    }
-
-  
-    Button {
-            text: "Pause/Resume";
-            
-            
-        }
-         // Pause/Resume Button as a Rectangle
- TouchArea {
-    clicked => {
-        root.pause_resume();
-    }
-}
-
-        // TouchArea for button interaction
-    }
-   
-
         Rectangle {
-            min-width: 600px;
-            height: 350px;
-            //x: 200px;
-            
+            width: 100%;  // Use full width available
+            background: #c2c0c0;
+            padding: 10px;
           
-         
-            for tile[i] in memory_tiles: MemoryTile {
-                x: mod(i, 4) * 74px;
-                y: floor(i / 4) * 74px;
-                width: 64px;
-                height: 64px;
-                icon: tile.image;
-                open_curtain: tile.image_visible || tile.solved;
-                // propagate the solved status from the model to the tile
-            solved: tile.solved;
-                clicked => {
-                    //Old [Player can open more than one tiles]  tile.image_visible = !tile.image_visible;
-              // New [Prevent player from opening more tiles than allowed]
+
     
-              if (!root.disable_tiles) {
-                        tile.image-visible = true;
-                        root.check_if_pair_solved();
+            VerticalBox {
+               alignment: center;
+                spacing: 10px;
+    
+                Text {
+                    
+                    text: "Memory Game";
+                    color: #5d6785c7;
+                    font-size: 20px;  // Adjusted font size
+                }
+    
+            HorizontalBox{ 
+               
+                
+                
+                Button {
+                    text: "Start Game";
+                    clicked => {
+                            root.start_game();
+                    }
+                }
+    
+                Button {
+                    text: "Restart Game";
+                    clicked => {
+                        root.restart_game();
                     }
                 }
             }
-
         }}
-    }}
-       
+    
+        HorizontalBox {  // Use horizontal layout for better fit
+            spacing: 10px;
+            height: 100%;
+            alignment:center;
+    
+            Rectangle {
+                width: 40%;  // Reduced width
+                
+                background: #1a1818;
+                border-radius: 5px;
+                padding: 10px;
+    
+                VerticalBox {
+                    spacing: 10px;
+    
+                    
+    
+                    Text {
+                        text: "Score: " + score;
+                        color: #FFFFFF;
+                        font-size: 14px;
+                    }
+    
+                    Text {
+                        text: "Attempts: " + attempts;
+                        color: #FFFFFF;
+                        font-size: 14px;
+                    }
+    
+                    Text {
+                        text: "Time: " + time_elapsed + " seconds";
+                        color: #FFFFFF;
+                        font-size: 14px;
+                    }
+    
+                    Button {
+                        text: "Restart Time";
+                        clicked => {
+                            root.pause_resume();
+                        }
+                    }
+                }
+            }
+            for t in [ "Memory  GAME. How fast are you?", "!" ] : Text {
+                text: t;
+            }
+    
+          VerticalBox { // Memory tiles grid 
+            
+            Rectangle {
+                width: 60%;  // Responsive width
+                background: #2a2a2a;
+                padding: 30px;
+              
+                
 
+
+              Rectangle { 
+                for tile[i] in memory_tiles: MemoryTile {
+                    x: mod(i, 4) * 84px;
+                    y: floor(i / 4) * 84px;
+                    width: 64px;
+                    height: 64px;
+                    icon: tile.image;
+                    padding: 20px;
+                   
+                    open_curtain: tile.image_visible || tile.solved;
+                    // propagate the solved status from the model to the tile
+                solved: tile.solved;
+                    clicked => {
+                        //Old [Player can open more than one tiles]  tile.image_visible = !tile.image_visible;
+                  // New [Prevent player from opening more tiles than allowed]
+        
+                  if (!root.disable_tiles) {
+                            tile.image-visible = true;
+                            root.check_if_pair_solved();
+                        }
+                    }
+                }}}
+    
+               }
+                }
+            
+        }
+    
+        // Congratulatory message
+        Rectangle {
+            width: 80%;
+            height: 50px;
+            background: #32CD32;
+            border-radius: 10px;
+            visible: show_congratulations_message;
+            
+    
+            Text {
+                text: congratulations_message;
+                color: #FFFFFF;
+                font-size: 20px;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+    }
