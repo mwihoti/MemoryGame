@@ -3,6 +3,8 @@ use std::convert::TryInto;
 use rand::prelude::SliceRandom;
 use slint::Model;
 use std::rc::Rc;
+use std::process;
+use slint::ComponentHandle;
 
 slint::include_modules!();
 
@@ -151,6 +153,7 @@ pub fn main() {
             // Reset scores and attempts
             *score.borrow_mut() = 0;
             *attempts.borrow_mut() = 0;
+            
             // Reset flip process status
             *tile_flips_in_progress_clone.borrow_mut() = false;
             if let Some(main_window) = main_window_weak_clone.upgrade() {
@@ -164,6 +167,9 @@ pub fn main() {
                 }});
             }
         }
+    });
+    main_window.on_quit(move || {
+        close_window();
     });
 
     main_window.run().unwrap();
@@ -183,9 +189,9 @@ pub fn main() {
 
 fn reshuffle_tiles(main_window: &MainWindow, tiles_model: Rc<slint::VecModel<TileData>>) {
     // Reset score, attempts, and other game state
-    main_window.set_score(0);
+    //main_window.set_score(0);
     main_window.set_attempts(0);
-    main_window.set_time_elapsed(0);
+    //main_window.set_time_elapsed(0);
     main_window.set_disable_tiles(false);
     main_window.set_congratulations_message("".into());
 
@@ -207,4 +213,10 @@ fn reshuffle_tiles(main_window: &MainWindow, tiles_model: Rc<slint::VecModel<Til
    
     }
     
+// Close window
+
+
+fn close_window() {
+   process::exit(0);
+}
 

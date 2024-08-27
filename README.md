@@ -6,7 +6,7 @@ MemoryGame
 Memory Game is built using Slint UI Rust.
 
 
-Video demo: https://gemoo.com/tools/upload-video/share/686938791240458240?codeId=vzqNmAeqaAO4O&card=686938786928721920&origin=videolinkgenerator
+Video demo: https://app.gemoo.com/share/home?codeId=DGlLJep7KGgY7
 
 ## How to Play
 
@@ -22,7 +22,9 @@ The Memory Game is a simple game where you need to find matching pairs of cards.
 
 - Timer: The game includes a timer that keeps track of the time it takes you to complete the game.
 - Score: The game keeps track of your score based on the number of moves you make.
+- Attempts: Keeps track number of trials you have made to match tiles
 - Restart: You can restart the game at any time by clicking on the restart button.
+- Quit Game: You can quit the game by clicking on 'quit game ' button.
 
 
 

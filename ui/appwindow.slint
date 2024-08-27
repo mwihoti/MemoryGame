@@ -91,6 +91,7 @@ export component MainWindow inherits Window {
     callback restart_game();
     callback pause_resume();
     callback reset_game();
+    callback quit();
     
     VerticalLayout {
         spacing: 10px;
@@ -118,18 +119,19 @@ export component MainWindow inherits Window {
             HorizontalBox{ 
                
                 
-                
-               // Button {
-                //    text: "Start Game";
-                //    clicked => {
-                          //  root.start_game();
-                   // }
-               // }
+               
     
                 Button {
                     text: "Restart Game";
                     clicked => {
                         root.reset_game();
+                    }
+                }
+                 
+                Button {
+                    text: "Qiut Game";
+                    clicked => {
+                        root.quit();
                     }
                 }
             }
